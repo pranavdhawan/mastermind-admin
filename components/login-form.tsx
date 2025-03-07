@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,11 +11,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
+import { signIn } from "next-auth/react"
 
+// // schema (any data type, string to complex objs) validaitiom for typescript
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 })
+
+
 
 export function LoginForm() {
   const router = useRouter()
@@ -31,21 +34,39 @@ export function LoginForm() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-
-      // For demo purposes, we'll just redirect to dashboard
+    try {
+      const response = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      })
+  
+      if (response?.error) {
+        toast({
+          title: "Login failed",
+          description: response.error,
+          variant: "destructive",
+        })
+        return
+      }
+  
       toast({
         title: "Login successful",
         description: "Welcome to the admin dashboard",
       })
-
       router.push("/dashboard")
-    }, 1500)
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "An error occurred while logging in",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

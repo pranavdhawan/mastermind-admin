@@ -16,9 +16,25 @@ import { UsersByClassChart } from "@/components/dashboard/users-by-class-chart"
 import { UsersByAgeChart } from "@/components/dashboard/users-by-age-chart"
 import { SubjectTimeChart } from "@/components/dashboard/subject-time-chart"
 import { StatsCard } from "@/components/dashboard/stats-card"
+import { useSession } from "next-auth/react"
+import { redirect } from "next/navigation"
 
 export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState("month")
+  const { status } = useSession({
+    required: false,
+    onUnauthenticated() {
+      window.location.href = "/login"
+    }
+  })
+
+  if (status === "loading") {
+    return(
+      <div>
+        Loading...
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
